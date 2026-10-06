@@ -12,5 +12,5 @@ def calculation(n,xs, ys, mean_x, mean_y):
     denom = dx * dy
     if denom == 0:
         raise ValueError("计算相关系数时分母为零，可能是数据中存在异常值或所有 x 或 y 值相同。")
-    r = prod / denom
+    r = prod / (denom**0.5)
     return r
