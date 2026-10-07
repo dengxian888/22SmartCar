@@ -1,7 +1,3 @@
-import yaml
-import csv
-import math
-import sys
 from init_cfg import init_cfg
 from read_data import read_data
 from sum_data import sum_data
@@ -43,12 +39,14 @@ class TestCorrelation(unittest.TestCase):
     def test_4(self):
         """测试列名不匹配，期望抛出 KeyError"""
         with self.assertRaises(KeyError):
-            read_data("test_data.csv", "sensor_a", "sensor_c")
+            cfg, config_dir = init_cfg()
+            read_data(config_dir, "test_data.csv", "sensor_a", "sensor_c")
 
     def test_5(self):
         """测试数据数量不匹配，期望抛出 ValueError"""
         with self.assertRaises(ValueError):
-            read_data("test_data.csv", "sensor_a", "sensor_b")
+            cfg, config_dir = init_cfg()
+            read_data(config_dir,"test_data.csv", "sensor_a", "sensor_b")
 
 if __name__ == '__main__':
     unittest.main()

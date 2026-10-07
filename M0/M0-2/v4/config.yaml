@@ -10,4 +10,4 @@ columns:
 task:
   name: "corr_analysis"
   # 是否打印中间量（mean_x / mean_y / n）
-  verbose: true
+  verbose: false

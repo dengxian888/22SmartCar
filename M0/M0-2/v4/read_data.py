@@ -1,9 +1,12 @@
 import csv
-import sys
+import os
 #数据读取函数：定义两个列表，打开数据文件并将每一行以字典格式读取为reader，键为表头，值为单元格，遍历reader将各值填入列表，返回两个列表
-def read_data(csv_path, col_x, col_y):
+def read_data(config_dir, csv_path, col_x, col_y):
     xs = []
     ys = []
+    #判断csv_path是否为绝对路径，如果不是则将其与config_dir拼接为绝对路径
+    if not os.path.isabs(csv_path):
+        csv_path=os.path.join(config_dir, csv_path)
     with open(csv_path) as f:
         reader = csv.DictReader(f)
         #检查文件是否为空
@@ -24,6 +27,7 @@ def read_data(csv_path, col_x, col_y):
         #检查是否存在空表头
         if len(xs) == 0 or len(ys) == 0:
             raise ValueError(f"数据文件 '{csv_path}' 中存在空表头。")
+        #检查两列数据长度是否一致
         if len(xs) != len(ys):
             raise ValueError(f"数据文件 '{csv_path}' 中列 '{col_x}' 和列 '{col_y}' 的数据长度不一致。") 
     return xs, ys
