@@ -1,7 +1,7 @@
 import yaml
 import argparse
 
-def init_cfg():
+def init_yaml():
     try:
         parser = argparse.ArgumentParser(description="我的程序") #建立参数解析
         parser.add_argument("--config", type=str, default="tasks.yaml", help="任务配置文件路径")
@@ -16,7 +16,7 @@ def init_cfg():
                 raise ValueError(f"错误：任务配置文件 '{TASK_PATH}' 为空。")
             
         timeout = Task["timeout"]
-        task_list = Task.get("tasks", [])
+        task_list = Task.get("tasks",[])
 
     except KeyError as e:
         raise KeyError(f"错误：task.yaml文件中缺少键 {e}")
