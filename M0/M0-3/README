@@ -7,3 +7,4 @@
 6、路径拼接用了根目录，“/”，不符合输出到当前工作空间的要求 v1
 7、未创建out这个文件夹，报了FileNotFoundError v1
 8、cleaned未被写入，是空列表 v2
+9、文件打开没有用with open as,不会自动关闭

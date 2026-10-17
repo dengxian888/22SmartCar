@@ -36,22 +36,23 @@ def read_data(input_file):
     try:
         data = []
         time = []
-        reader = csv.DictReader(open(input_file, "r"))
-        if reader is None:
-            raise ValueError(f"错误：输入文件 {input_file} 为空")
-        line_num=1
-        for row in reader:
-            if not row.get("value") or not row.get("time"):
-                raise ValueError(f"错误：数据缺失，{line_num}行缺少 time 或 value 列，当前行内容: {row}")
-            t = float(row["time"])
-            v = float(row["value"])
+        with open(input_file,"r") as f:
+            reader = csv.DictReader(f)
+            if reader is None:
+                raise ValueError(f"错误：输入文件 {input_file} 为空")
+            line_num=1
+            for row in reader:
+                if not row.get("value") or not row.get("time"):
+                    raise ValueError(f"错误：数据缺失，{line_num}行缺少 time 或 value 列，当前行内容: {row}")
+                t = float(row["time"])
+                v = float(row["value"])
 
-            time.append(t)
-            data.append(v)
-            line_num+=1
-            if len(data)==0:
-                raise ValueError(f"错误：输入文件 {input_file} 中没有数据")
-        print("共读取 %d 条数据" % len(data))
+                time.append(t)
+                data.append(v)
+                line_num+=1
+                if len(data)==0:
+                    raise ValueError(f"错误：输入文件 {input_file} 中没有数据")
+            print("共读取 %d 条数据" % len(data))
     except FileNotFoundError as e:
         raise FileNotFoundError(f"错误：未找到输入文件 {input_file}")
     except TypeError as e:
@@ -93,11 +94,11 @@ def output(output_dir, output_file, cleaned_times, cleaned_data):
         output_path = os.path.join(output_dir, output_file)
         #生成out目录
         os.makedirs(output_dir, exist_ok=True)
-        f = open(output_path, "w")
-        writer = csv.writer(f)
-        writer.writerow(["times", "value"])
-        for t,v in zip(cleaned_times,cleaned_data):
-            writer.writerow([f"{t:.2f}",v])
+        with open(output_path, "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(["times", "value"])
+            for t,v in zip(cleaned_times,cleaned_data):
+                writer.writerow([f"{t:.2f}",v])
     except FileNotFoundError as e:
         raise FileNotFoundError(f"错误：输出文件所在目录{output_dir}创建失败失败")
     return output_path
