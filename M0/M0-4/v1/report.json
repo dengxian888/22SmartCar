@@ -1,62 +1,62 @@
 {
     "timeout": false,
-    "total_duration": 11.012347221374512,
+    "total_duration": 11.010622024536133,
     "tasks": [
         {
             "task_name": "Init",
             "status": "SUCCESS",
             "attempt": 1,
             "duration": 0.5,
-            "started_at": 1792117468.1306918,
-            "ended_at": 1792117468.631322
+            "started_at": 1792229599.15634,
+            "ended_at": 1792229599.656736
         },
         {
             "task_name": "Navigate",
             "status": "SUCCESS",
             "attempt": 1,
             "duration": 2.5,
-            "started_at": 1792117468.6314085,
-            "ended_at": 1792117471.1340873
+            "started_at": 1792229599.6567943,
+            "ended_at": 1792229602.1586847
         },
         {
             "task_name": "DetectQR",
             "status": "SUCCESS",
             "attempt": 1,
             "duration": 1.5,
-            "started_at": 1792117471.1341786,
-            "ended_at": 1792117472.635832
+            "started_at": 1792229602.1587503,
+            "ended_at": 1792229603.660383
         },
         {
             "task_name": "AvoidObstacle",
             "status": "SUCCESS",
             "attempt": 1,
             "duration": 2.0,
-            "started_at": 1792117472.6359127,
-            "ended_at": 1792117474.6377687
+            "started_at": 1792229603.6604447,
+            "ended_at": 1792229605.6618102
         },
         {
             "task_name": "Grasp",
             "status": "SUCCESS",
             "attempt": 1,
             "duration": 1.0,
-            "started_at": 1792117474.6378558,
-            "ended_at": 1792117475.6390295
+            "started_at": 1792229605.661885,
+            "ended_at": 1792229606.66296
         },
         {
             "task_name": "Place",
             "status": "SUCCESS",
             "attempt": 1,
             "duration": 1.0,
-            "started_at": 1792117475.6391206,
-            "ended_at": 1792117476.6402864
+            "started_at": 1792229606.663015,
+            "ended_at": 1792229607.6641777
         },
         {
             "task_name": "ReturnHome",
             "status": "SUCCESS",
             "attempt": 1,
             "duration": 2.5,
-            "started_at": 1792117476.6403668,
-            "ended_at": 1792117479.142979
+            "started_at": 1792229607.664247,
+            "ended_at": 1792229610.1669028
         }
     ]
 }
