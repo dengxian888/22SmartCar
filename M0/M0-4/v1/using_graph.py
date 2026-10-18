@@ -63,6 +63,33 @@ def using_graph(task_list,timeout,adj_list,in_degree):
             task_duration+=duration
             current_rate = rate()
             n=1
+
+            total_real_time = time.time() - start_time #当前执行时间
+            if total_real_time > timeout:
+                is_timeout=True
+                task_end=time.time()
+                print(f"TIMEOUT,已执行时间：{total_real_time}秒")
+                for task in task_dict.keys():
+                    task_status[current_task]={
+                        "status":"TIMEOUT",
+                        "attempt":n,
+                        "duration":task_duration,
+                        "started_at":task_start,
+                        "ended_at":task_end
+
+                    }
+                    if task not in task_status:
+                        task_status[task] = {
+                            "status": "TIMEOUT",
+                            "attempt":0,
+                            "duration":0,
+                            "started_at":" ",
+                            "ended_at":" "
+                        }
+            if is_timeout:
+                print(f"TIMEOUT,已执行时间：{total_real_time}秒")
+                break#停止执行所有任务
+
             #如果任务执行失败，重试最多2次
             while current_rate > success_rate:
                 print(f"{COLOR_RED}任务 {current_task} 执行失败!{COLOR_RESET}")
