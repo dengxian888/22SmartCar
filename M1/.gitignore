@@ -1,0 +1,15 @@
+# ROS 2 编译生成的目录
+build/
+install/
+log/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VSCode 配置文件（可选，如果你不想共享配置）
+.vscode/
+
+# 编译日志（如果你的工作空间有额外的日志文件）
+*.log
