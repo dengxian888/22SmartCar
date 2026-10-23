@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'Node_B = py01.Node_B:main',
             'Node_A = py01.Node_A:main'
         ],
     },
