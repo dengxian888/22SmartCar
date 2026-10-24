@@ -14,7 +14,7 @@ class Talker(Node):
     def on_timer(self):
         message=SensorData()
         
-        message.distance = float(random.uniform(0.2, 5.0))
+        message.distance = float(random.uniform(0.0, 5.0))
         message.unit = "m"
         message.stamp = self.get_clock().now().to_msg()
         # 模拟状态：90%正常，5%超量程，5%错误
@@ -34,9 +34,14 @@ class Talker(Node):
 def main():
     rclpy.init()
     node=Talker()
-    rclpy.spin(node) 
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':
