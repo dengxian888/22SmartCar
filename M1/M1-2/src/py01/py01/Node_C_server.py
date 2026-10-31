@@ -5,7 +5,7 @@ from sensor_interfaces.srv import TriggerAlarm
 class AlarmServer(Node):
     def __init__(self):
         super().__init__('alarm_server_node')
-        self.srv = self.create_service(TriggerAlarm, '/trigger_alarm', self.handle_alarm)
+        self.srv = self.create_service(TriggerAlarm, 'trigger_alarm', self.handle_alarm)
         
         self.get_logger().info("节点C：服务端已启动")
 

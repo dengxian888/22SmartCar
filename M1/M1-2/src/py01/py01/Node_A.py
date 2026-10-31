@@ -5,9 +5,9 @@ import random
 
 class Talker(Node):
     def __init__(self):
-        super().__init__("talker_node_py")
+        super().__init__("node_a_sensor")
         self.get_logger().info("发布方创建")
-        self.publisher=self.create_publisher(SensorData,"/sensor_data",10)
+        self.publisher=self.create_publisher(SensorData,"sensor_data",10)
         
         self.timer=self.create_timer(0.1,self.on_timer)
         

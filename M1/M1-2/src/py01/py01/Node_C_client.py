@@ -5,7 +5,7 @@ from sensor_interfaces.srv import TriggerAlarm
 
 class AlarmClientNode(Node):
     def __init__(self):
-        super().__init__('alarm_node')
+        super().__init__('node_c_alarm')
         
         # 1. 声明参数
         self.declare_parameter('alarm_threshold', 0.3)
@@ -15,10 +15,10 @@ class AlarmClientNode(Node):
 
         # 2. 订阅距离数据
         self.subscription = self.create_subscription(
-            Float32, '/processed_distance', self.distance_callback, 10)
+            Float32, 'processed_distance', self.distance_callback, 10)
 
         # 3. 创建服务客户端（只负责发请求）
-        self.cli = self.create_client(TriggerAlarm, '/trigger_alarm')
+        self.cli = self.create_client(TriggerAlarm, 'trigger_alarm')
         
         # 4. 状态管理
         self.pending_future = None

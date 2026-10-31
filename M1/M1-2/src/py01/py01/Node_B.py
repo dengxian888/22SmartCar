@@ -6,10 +6,10 @@ from rcl_interfaces.msg import SetParametersResult
 
 class Listener(Node):
     def __init__(self):
-        super().__init__("listener_node_py")
+        super().__init__("node_b_filter")
         self.get_logger().info("订阅方创建")
         self.subscription=self.create_subscription(SensorData,"sensor_data",self.listener_callback,10)
-        self.publisher= self.create_publisher(Float32, '/processed_distance', 10)
+        self.publisher= self.create_publisher(Float32, 'processed_distance', 10)
 
         #声明动态参数 alpha，默认值 0.3
         self.declare_parameter('alpha', 0.3)
