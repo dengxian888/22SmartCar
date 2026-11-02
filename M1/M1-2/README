@@ -1,0 +1,3 @@
+一键启动命令：ros2 launch py01 bringup.launch.py
+验证两组隔离:先执行ros2 launch py01 bringup.launch.py namespace:=all
+再新开终端执行ros2 topic list看到各话题都在robot1和robot2下
