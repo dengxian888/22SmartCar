@@ -29,6 +29,8 @@ setup(
     entry_points={
         'console_scripts': [
             'static_tf_broadcaster = py02.static_tf_broadcaster:main',
+            'time_observer = py02.time_observer:main',
+            'sync_node = py02.sync_node:main',
         ],
     },
 )
