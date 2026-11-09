@@ -61,7 +61,10 @@ class StaticTFBroadcaster(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = StaticTFBroadcaster()
-    rclpy.spin(node)
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass # 按下 Ctrl+C 时静默退出
     node.destroy_node()
     rclpy.shutdown()
     
