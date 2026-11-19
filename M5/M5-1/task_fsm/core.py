@@ -8,6 +8,7 @@ from .logger import Logger
 class TaskEngine:
     def __init__(self, yaml_path: str, ctx: TaskContext | None = None):
         self.ctx = ctx or TaskContext(task_id=f"run_{int(time.time())}")
+        self.start_time = time.monotonic()
         self.top_defs = self._read_yaml(yaml_path)
         self.defs, self.steps, self.executed = {}, [], set()
         self._collect_defs(self.top_defs)
@@ -29,11 +30,25 @@ class TaskEngine:
         status = "SUCCESS"
         for d in self.top_defs:
             if d["name"] in self.executed: continue
-            if self.ctx.abort_requested: status = "ABORTED"; break
+            
+            # 框架级：检查全局 deadline
+            if self.ctx.deadline and time.monotonic() > self.ctx.deadline:
+                status = "TIMEOUT"
+                Logger.timeout("任务级 deadline 超时截断")
+                break
+                
+            if self.ctx.abort_requested: 
+                status = "ABORTED"; break
+            
+            Logger.transition(f"开始执行节点 -> {d['name']}")
             r = self._execute_def(d, visited=set())
             self.executed.add(d["name"])
-            if r in ("FAILED", "ABORTED"): status = r; break
-            if r == "SKIPPED": self.ctx.degraded = True
+            
+            if r in ("FAILED", "ABORTED"): 
+                status = r; break
+            if r == "SKIPPED": 
+                self.ctx.degraded = True
+                
         self._build_report(status)
         return status
 
@@ -52,12 +67,18 @@ class TaskEngine:
         while True:
             attempt += 1
             status = self._execute_with_timeout(node, d.get("timeout"))
-            if status == "SUCCESS": self._record(name, "SUCCESS", attempt, start); return "SUCCESS"
-            if status == "CANCELLED": self._record(name, "ABORTED", attempt, start); return "ABORTED"
+            
+            if status == "SUCCESS": 
+                self._record(name, "SUCCESS", attempt, start)
+                return "SUCCESS"
+            if status == "CANCELLED": 
+                self._record(name, "ABORTED", attempt, start)
+                return "ABORTED"
 
             if self.ctx.retry_budget[name] > 0:
                 self.ctx.retry_budget[name] -= 1
                 self.ctx.meta.setdefault("retries", {})[name] = attempt
+                Logger.retry(f"{name} 执行失败，第 {attempt} 次重试...")
                 time.sleep(retry_interval)
                 continue
 
@@ -66,35 +87,82 @@ class TaskEngine:
                 if fallback in self.defs:
                     self.ctx.meta.setdefault("fallback_trace", []).append((name, fallback))
                     self.executed.add(fallback)
+                    Logger.fallback(f"❌ {name} 失败，触发降级 -> 尝试拉起 {fallback}")
                     if self._execute_def(self.defs[fallback], visited) == "SUCCESS":
-                        self._record(name, "FALLBACK_OK", attempt, start); return "SUCCESS"
+                        self._record(name, "FALLBACK_OK", attempt, start)
+                        return "SUCCESS"
 
-            if on_fail == "skip": self.ctx.degraded = True; self._record(name, "SKIPPED", attempt, start); return "SKIPPED"
+            if on_fail == "skip": 
+                self.ctx.degraded = True
+                self._record(name, "SKIPPED", attempt, start)
+                return "SKIPPED"
             
-            self._record(name, "FAILED", attempt, start); return "FAILED"
+            self._record(name, "FAILED", attempt, start)
+            return "FAILED"
 
     def _execute_with_timeout(self, node, timeout):
         box = {"status": "FAILED", "done": False}
+        
         def _target():
             try:
-                node.setup(); box["status"] = node.execute()
+                node.setup()
+                box["status"] = node.execute()
             finally:
-                box["done"] = True; node.teardown()
-        t = threading.Thread(target=_target, daemon=True); t.start(); t.join(timeout)
-        if not box["done"]: node.cancel(); return "FAILED"
+                box["done"] = True
+                node.teardown()
+                
+        t = threading.Thread(target=_target, daemon=True)
+        t.start()
+        t.join(timeout)
+        
+        if not box["done"]: 
+            Logger.timeout(f"⏰ {node.name} 步骤执行超时 ({timeout}s)，触发协作式取消")
+            node.cancel()
+            return "FAILED"
+            
+        if box["status"] == "SUCCESS" and self.ctx.data:
+            Logger.context(f"任务上下文更新: {list(self.ctx.data.keys())}")
+            
         return box["status"]
 
     def _run_parallel(self, d, visited):
-        p = d["parallel"]; policy = p.get("fail_policy", "any_fail")
+        p = d["parallel"]
+        policy = p.get("fail_policy", "any_fail")
         results = [self._execute_def(b, visited | {d["name"]}) for b in p.get("branches", [])]
+        
         if policy == "all_must_succeed" and any(r != "SUCCESS" for r in results): return "FAILED"
         if policy == "any_fail" and any(r == "FAILED" for r in results): return "FAILED"
         if policy == "any_success" and not any(r == "SUCCESS" for r in results): return "FAILED"
         return "SUCCESS"
 
     def _record(self, name, status, attempt, start):
-        self.steps.append({"name": name, "status": status, "attempts": attempt, "elapsed": round(time.monotonic() - start, 3)})
+        # 核心修复 1：存入完整的字典结构
+        self.steps.append({
+            "name": name,
+            "status": status,
+            "attempts": attempt,
+            "elapsed": round(time.monotonic() - start, 3),
+            "degraded": self.ctx.degraded or (status in ("SKIPPED", "FALLBACK_OK"))
+        })
 
     def _build_report(self, status):
-        report = {"task_id": self.ctx.task_id, "status": status, "degraded": self.ctx.degraded, "finished_at": datetime.now(timezone.utc).isoformat(), "steps": self.steps, "data": self.ctx.data, "meta": self.ctx.meta}
-        with open("task_report.json", "w", encoding="utf-8") as f: json.dump(report, f, ensure_ascii=False, indent=2)
+        total_elapsed = time.monotonic() - self.start_time
+        report = {
+            "task_id": self.ctx.task_id,
+            "result": status,
+            "total_elapsed_s": round(total_elapsed, 3),
+            # 核心修复 2：安全地读取 s["status"]
+            "steps": [
+                {
+                    "name": s["name"],
+                    "status": s["status"],
+                    "elapsed_s": s["elapsed"],
+                    "retries": s["attempts"] - 1,
+                    "degraded": s["degraded"],
+                } for s in self.steps
+            ],
+            "final_context": self.ctx.data,
+            "meta": self.ctx.meta,
+        }
+        with open("task_report.json", "w", encoding="utf-8") as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)

@@ -76,5 +76,8 @@ class ExecuteGrasp(TaskNode):
 class SpeakTTS(TaskNode):
     def execute(self):
         from .logger import Logger
+        if self._mock() == "fail": 
+            Logger.error("TTS 播报失败")
+            return "FAILED"
         Logger.info(f"TTS 播报: {self.params.get('text', '')}")
         return "SUCCESS"
