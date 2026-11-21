@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>M5-3 任务终端</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; margin: 20px; }
+        .panel { border: 1px solid #444; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        h2 { color: #4CAF50; margin-top: 0; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        .btn-estop { background-color: #f44336; color: white; width: 100%; font-size: 24px; padding: 30px; }
+        .btn-start { background-color: #2196F3; color: white; }
+        .btn-pause { background-color: #FF9800; color: white; }
+        .btn-stop { background-color: #9E9E9E; color: white; }
+        /* 下拉菜单样式 */
+        select { padding: 8px; width: 300px; margin-right: 10px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px; }
+        .status { font-size: 18px; font-weight: bold; color: #FFEB3B; }
+    </style>
+</head>
+<body>
+    <h1>🚗 M5-3 统一任务终端</h1>
+    
+    <div class="panel">
+        <h2>🚨 紧急控制</h2>
+        <button class="btn btn-estop" onclick="triggerEstop()">🚨 一键急停 (E-STOP)</button>
+        <div style="margin-top: 15px;">
+            <button class="btn btn-start" onclick="sendRefCmd('START')">开始比赛</button>
+            <button class="btn btn-pause" onclick="sendRefCmd('PAUSE')">暂停</button>
+            <button class="btn btn-start" onclick="sendRefCmd('RESUME')">恢复</button>
+            <button class="btn btn-stop" onclick="sendRefCmd('STOP')">结束</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>🎙️ 外设与语音输入（测试通道）</h2>
+        <p style="color: #aaa; font-size: 14px;">模拟物理按键或离线语音唤醒，与上方按钮走同一命令总线。</p>
+        <button class="btn" style="background-color: #673AB7; color: white;" onclick="simulateTrigger('START', 'voice_offline')">🗣️ 语音：“开始比赛”</button>
+        <button class="btn" style="background-color: #9C27B0; color: white;" onclick="simulateTrigger('PAUSE', 'voice_offline')">🗣️ 语音：“暂停”</button>
+        <button class="btn" style="background-color: #f44336; color: white;" onclick="simulateTrigger('estop', 'physical_button')">🔴 物理急停按键</button>
+    </div>
+
+    <div class="panel">
+        <h2>⚙️ 热切换与状态</h2>
+        <div>
+            <label>切换感知模型路径：</label>
+            <!-- 【修改点 1】把 input 换成了 select 下拉菜单 -->
+            <select id="modelSelect">
+                <option value="">正在加载模型列表...</option>
+            </select>
+            <button class="btn btn-start" onclick="switchModel()">热加载模型</button>
+        </div>
+        <p style="margin-top: 15px;">当前裁判状态：<span class="status" id="refStatus">READY</span></p>
+    </div>
+
+    <script>
+        // 【修改点 2】页面加载时，自动从后端 YAML 读取模型列表，填入下拉框
+        window.onload = async () => {
+            try {
+                const res = await fetch('/api/config');
+                const config = await res.json();
+                const select = document.getElementById('modelSelect');
+                
+                if (config.models) {
+                    select.innerHTML = ''; // 清空默认提示
+                    config.models.forEach(m => {
+                        let opt = document.createElement('option');
+                        opt.value = m.path;
+                        opt.text = `${m.name} (${m.path})`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error("加载 YAML 配置失败", e);
+            }
+        };
+
+        async function triggerEstop() {
+            if(!confirm("确定要触发急停吗？")) return;
+            const res = await fetch('/api/estop', { method: 'POST' });
+            const data = await res.json();
+            alert(data.msg);
+        }
+
+        // 【修改点 3】获取下拉框的值，而不是输入框的值
+        async function switchModel() {
+            const path = document.getElementById('modelSelect').value;
+            if (!path) {
+                alert("请先选择模型！");
+                return;
+            }
+            
+            const res = await fetch('/api/switch_model', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({model_path: path})
+            });
+            const data = await res.json();
+            // 展示后端返回的真实成功/回滚提示信息
+            alert(data.msg); 
+        }
+
+        async function sendRefCmd(cmd) {
+            await fetch('/api/referee', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({cmd: cmd})
+            });
+        }
+
+        // 简单轮询获取裁判状态
+        setInterval(async () => {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            document.getElementById('refStatus').innerText = data.ref_state;
+        }, 1000);
+
+        async function simulateTrigger(triggerType, sourceType) {
+            if (triggerType === 'estop' && !confirm("物理按键触发急停！")) return;
+            
+            const res = await fetch('/api/physical_trigger', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({trigger: triggerType, source: sourceType})
+            });
+            const data = await res.json();
+            alert(data.msg);
+        }
+    </script>
+</body>
+</html>

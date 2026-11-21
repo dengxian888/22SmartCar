@@ -2,3 +2,29 @@ __pycache__/
 *.pyc
 venv/
 *.vscode
+
+# 编译产物
+build/
+devel/
+install/
+logs/
+
+# 大型数据文件
+*.bag
+*.pcd
+*.mp4
+*.zip
+*.tar.gz
+
+# 模型权重
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# 编辑器配置
+.vscode/
+.idea/
+
+# 系统文件
+.DS_Store

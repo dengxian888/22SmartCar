@@ -1,0 +1,15 @@
+# M5-3 终端可切换模型清单与参数阈值
+models:
+  - name: "default"
+    path: "/models/default.engine"
+    description: "基础 YOLOv5 感知模型"
+  - name: "v3"
+    path: "/models/best_v3.engine"
+    description: "升级版 YOLOv8 模型"
+  - name: "bad"
+    path: "/models/bad.engine"
+    description: "测试用故障模型（用于验证回滚）"
+
+thresholds:
+  confidence: 0.75
+  iou: 0.45
